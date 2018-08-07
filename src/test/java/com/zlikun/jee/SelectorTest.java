@@ -3,8 +3,9 @@ package com.zlikun.jee;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.*;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 

@@ -2,13 +2,10 @@ package com.zlikun.jee;
 
 import org.junit.Test;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 
 /**
  * @auther zlikun <zlikun-dev@hotmail.com>
