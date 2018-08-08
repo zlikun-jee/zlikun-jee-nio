@@ -16,27 +16,22 @@ public class FileChannelTest {
     @Test
     public void test() throws IOException {
 
-        RandomAccessFile raf = new RandomAccessFile("src/test/resources/hello.txt" ,"rw") ;
-        // 获取文件通道
-        FileChannel channel = raf.getChannel() ;
+        try (RandomAccessFile raf = new RandomAccessFile("pom.xml", "r")) {
+            // 打开文件通道
+            try (FileChannel channel = raf.getChannel()) {
+                // 分配一个字节缓冲区
+                ByteBuffer buffer = ByteBuffer.allocate(64);
+                // 从通道中读取数据写入缓冲区，返回实际写入数据长度
+                while (channel.read(buffer) != -1) {
+                    buffer.flip();
+                    while (buffer.hasRemaining()) {
+                        System.out.print((char) buffer.get());
+                    }
+                    buffer.clear();
+                }
 
-        ByteBuffer buffer = ByteBuffer.allocate(64) ;
-
-        // 从通道中读取数据写入缓冲区，返回实际写入数据长度
-        int size = channel.read(buffer) ;
-        while (size != -1) {
-            buffer.flip() ;
-
-            while (buffer.hasRemaining()) {
-                System.out.print((char) buffer.get());
             }
-
-            buffer.clear() ;
-            size = channel.read(buffer) ;
-
         }
-
-        raf.close();
 
     }
 
