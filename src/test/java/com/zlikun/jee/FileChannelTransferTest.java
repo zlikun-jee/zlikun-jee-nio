@@ -7,6 +7,9 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
 /**
+ * channel-to-channel，transferFrom与transferTo功能一致，方向相反
+ * 采用这种方式性能极好，如果能使用推荐之
+ *
  * @auther zlikun <zlikun-dev@hotmail.com>
  * @date 2017/5/16 15:51
  */
@@ -15,32 +18,39 @@ public class FileChannelTransferTest {
     @Test
     public void transferFrom() throws IOException {
 
-        RandomAccessFile fromFile = new RandomAccessFile("src/test/resources/hello.txt" ,"r") ;
-        FileChannel fromChannel = fromFile.getChannel() ;
+        // 打列随机访问文件对象（源对象、目标对象）
+        try (RandomAccessFile fromFile = new RandomAccessFile("LICENSE", "r");
+             RandomAccessFile toFile = new RandomAccessFile("target/LICENSE.txt", "rw")) {
 
-        RandomAccessFile toFile = new RandomAccessFile("target/hello.log" ,"rw") ;
-        FileChannel toChannel = toFile.getChannel() ;
+            // 打开两个文件通道
+            try (FileChannel fromChannel = fromFile.getChannel();
+                 FileChannel toChannel = toFile.getChannel()) {
 
-        // 将数据从源通道传输到FileChannel中
-        toChannel.transferFrom(fromChannel ,0 ,fromChannel.size()) ;
+                // 从一个通道读取数据写入另一个通道（文件复制）
+                toChannel.transferFrom(fromChannel, 0, fromChannel.size());
 
-        toFile.close();
-        fromFile.close();
+            }
+        }
+
     }
 
     @Test
     public void transferTo() throws IOException {
-        RandomAccessFile fromFile = new RandomAccessFile("src/test/resources/hello.txt" ,"r") ;
-        FileChannel fromChannel = fromFile.getChannel() ;
 
-        RandomAccessFile toFile = new RandomAccessFile("target/hello.log" ,"rw") ;
-        FileChannel toChannel = toFile.getChannel() ;
+        // 打列随机访问文件对象（源对象、目标对象）
+        try (RandomAccessFile fromFile = new RandomAccessFile("LICENSE", "r");
+             RandomAccessFile toFile = new RandomAccessFile("target/LICENSE.txt", "rw")) {
 
-        // 将数据从FileChannel传输到其他的channel中
-        fromChannel.transferTo(0 ,fromChannel.size() ,toChannel) ;
+            // 打开两个文件通道
+            try (FileChannel fromChannel = fromFile.getChannel();
+                 FileChannel toChannel = toFile.getChannel()) {
 
-        toFile.close();
-        fromFile.close();
+                // 从一个通道读取数据写入另一个通道（文件复制）
+                fromChannel.transferTo(0, fromChannel.size(), toChannel);
+
+            }
+        }
+
     }
 
 }
