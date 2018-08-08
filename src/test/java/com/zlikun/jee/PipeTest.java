@@ -5,6 +5,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
+import java.util.concurrent.CountDownLatch;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @auther zlikun <zlikun-dev@hotmail.com>
@@ -15,63 +18,73 @@ public class PipeTest {
     @Test
     public void test() throws IOException, InterruptedException {
         // 打开管道
-        final Pipe pipe = Pipe.open() ;
+        final Pipe pipe = Pipe.open();
 
-        Thread t1 = new Thread(){
-            @Override
-            public void run() {
-                try {
-                    source(pipe);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        // 线程计数器
+        final CountDownLatch latch = new CountDownLatch(2);
+
+        // 启动生产者线程（源）
+        new Thread(() -> {
+            try {
+                source(pipe);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } ;
-        t1.start();
+            latch.countDown();
+        }).start();
 
-        Thread t2 = new Thread(){
-            @Override
-            public void run() {
-                try {
-                    sink(pipe);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        // 启动消费者线程（目标）
+        new Thread(() -> {
+            try {
+                sink(pipe);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } ;
-        t2.start();
+            latch.countDown();
+        }).start();
 
-        t1.join();
-        t2.join();
+        latch.await();
 
     }
 
+    /**
+     * 向管道写数据（感觉跟Flume的工作机制很像）
+     *
+     * @param pipe
+     * @throws IOException
+     */
     private void sink(Pipe pipe) throws IOException {
 
-        // Pipe.SinkChannel
-        Pipe.SinkChannel sinkChannel = pipe.sink() ;
+        try (Pipe.SinkChannel channel = pipe.sink()) {
 
-        // 向管道写数据
-        ByteBuffer sinkBuffer = ByteBuffer.allocate(128) ;
-        sinkBuffer.clear() ;
-        sinkBuffer.put("Connected to the target VM, address: 'javadebug', transport: 'shared memory'".getBytes()) ;
-        sinkBuffer.flip() ;
-
-        while (sinkBuffer.hasRemaining()) {
-            sinkChannel.write(sinkBuffer) ;
+            ByteBuffer buffer = ByteBuffer.allocate(128);
+            buffer.put("Hello NIO !".getBytes());
+            buffer.flip();
+            while (buffer.hasRemaining()) {
+                channel.write(buffer);
+            }
+            buffer.clear();
         }
-
-        sinkBuffer.clear() ;
 
     }
 
+    /**
+     * 从通道中读取数据
+     *
+     * @param pipe
+     * @throws IOException
+     */
     private void source(Pipe pipe) throws IOException {
 
-        // 从管道读取数据
-        Pipe.SourceChannel sourceChannel = pipe.source();
-        ByteBuffer sourceBuffer = ByteBuffer.allocate(128) ;
-        System.out.println(sourceChannel.read(sourceBuffer));
-        System.out.println(new String(sourceBuffer.array()));
+        try (Pipe.SourceChannel channel = pipe.source()) {
+            ByteBuffer buffer = ByteBuffer.allocate(128);
+            // 从通道中读出数据（写入缓冲区）
+            assertEquals(11, channel.read(buffer));
+            // 准备开始读取缓冲区数据
+            buffer.flip();
+            // 从缓冲区中清空数据（打印）
+            assertEquals("Hello NIO !", new String(buffer.array(), buffer.position(), buffer.remaining()));
+        }
 
     }
 
